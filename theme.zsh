@@ -75,7 +75,7 @@ function user_display() {
 
   if [[ "$SSH_CONNECTION" != '' ]]
   then
-    display="%F{yellow}‹SSH› %B%n %F{blue}on %m%f%b"
+    display="%F{yellow}‹SSH› %n %B%F{blue}on %m%f%b"
   else
     display="%B%F{blue}%n on %m%f%b"
   fi
