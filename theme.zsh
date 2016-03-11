@@ -100,9 +100,9 @@ function user_display_prompt_info() {
     local user
 
     if [[ $UID -eq 0 ]]; then
-        user="%F{white}%n%f"
+        user="%B%F{white}%n%f%b"
     else
-        user="%F{blue}%n%f"
+        user="%B%F{blue}%n%f%b"
     fi
 
     if [[ "$SSH_CONNECTION" != '' ]]; then
