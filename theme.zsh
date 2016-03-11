@@ -1,12 +1,4 @@
-# black or 0      red or 1
-# green or 2      yellow or 3
-# blue or 4        magenta or 5
-# cyan or 6        white or 7
-
-local nl='
-'
-
-function prompt_pure_human_time_to_var() {
+function human_time_to_var() {
     local human
     local total_milliseconds=$1
     local var=$2
@@ -35,7 +27,7 @@ function prompt_preexec() {
 
 function prompt_precmd() {
     if [[ $timer ]]; then
-        prompt_pure_human_time_to_var $(($EPOCHREALTIME - $timer)) "timer_show"
+        human_time_to_var $(($EPOCHREALTIME - $timer)) "timer_show"
         export EXECUTION_TIME="%F{cyan}‹${timer_show}›%f "
         unset timer
     fi
@@ -49,11 +41,39 @@ function parse_git_dirty() {
     fi
 }
 
+function check_git_arrows() {
+	# check if there is an upstream configured for this branch
+	command git rev-parse --abbrev-ref @'{u}' &>/dev/null || return
+
+	local arrow_status
+	# check git left and right arrow_status
+	arrow_status="$(command git rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)"
+	# exit if the command failed
+	(( !$? )) || return
+
+	# left and right are tab-separated, split on tab and store as array
+	arrow_status=(${(ps:\t:)arrow_status})
+	local arrows left=${arrow_status[1]} right=${arrow_status[2]}
+
+	(( ${right:-0} > 0 )) && arrows+="⇣"
+	(( ${left:-0} > 0 )) && arrows+="⇡"
+
+    echo "${arrows}"
+}
+
+function check_git_stash() {
+    local stash_count=$(command git stash list 2> /dev/null | wc -l | tr -d ' ')
+
+    if [[ $stash_count -gt 0 ]]; then
+        echo "($stash_count)"
+    fi
+}
+
 function git_prompt_info() {
     local ref
     ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
     ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
-    echo "%F{yellow}‹${ref#refs/heads/}%B%F{red}$(parse_git_dirty)%b%F{yellow}›%f "
+    echo "%F{yellow}‹${ref#refs/heads/}%B$(check_git_stash)%F{red}$(parse_git_dirty)%b%F{yellow}$(check_git_arrows)›%f "
 }
 
 function virtualenv_prompt_info() {
@@ -70,22 +90,32 @@ function virtualenv_prompt_info() {
 }
 
 function jenv_prompt_info() {
-    if [[ -f .java-version ]]; then
-        echo "%F{magenta}‹jenv:$(cat .java-version)›%f "
+    if $(jenv local &> /dev/null); then
+        echo "%F{magenta}‹jenv:$(jenv local)›%f "
     fi
 }
 
 function user_display_prompt_info() {
     local display
+    local user
+
+    if [[ $UID -eq 0 ]]; then
+        user="%F{white}%n%f"
+    else
+        user="%F{blue}%n%f"
+    fi
 
     if [[ "$SSH_CONNECTION" != '' ]]; then
-        display="%F{yellow}[SSH] %n %B%F{blue}on %m%f%b "
+        display="%F{yellow}[SSH]$user %B%F{blue}on %m%f%b "
     else
-        display="%B%F{blue}%n on %m%f%b "
+        display="%B$user%F{blue} on %m%f%b "
     fi
 
     echo $display
 }
+
+local nl='
+'
 
 function theme_setup() {
     PROMPT_EOL_MARK=''
@@ -103,9 +133,10 @@ function theme_setup() {
     local jenv='$(jenv_prompt_info)'
 
     local return_code="%(?..%F{red}%? ↵%f)"
+    local prompt_color="%(?.%F{green}❯.%F{red}❯%f)"
 
     local prompt_top="╭─${user_host}${exe_time}${current_dir}${git_branch}${virtualenv}${jenv}"
-    local prompt_btm="╰─❯ "
+    local prompt_btm="╰─${prompt_color} "
 
     PROMPT="${prompt_top}${nl}${prompt_btm}"
 
