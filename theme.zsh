@@ -108,7 +108,7 @@ function user_display_prompt_info() {
     if [[ "$SSH_CONNECTION" != '' ]]; then
         display="%F{yellow}[SSH]$user %B%F{blue}on %m%f%b "
     else
-        display="%B$user%F{blue} on %m%f%b "
+        display="$user%B%F{blue} on %m%f%b "
     fi
 
     echo $display
