@@ -22,14 +22,17 @@ function human_time_to_var() {
 }
 
 function prompt_preexec() {
-  timer=${timer:-$EPOCHREALTIME}
+    export timer=${timer:-$EPOCHREALTIME}
 }
 
 function prompt_precmd() {
-    if [[ $timer ]]; then
+    unset PROMPT_EXECUTION_TIME
+
+    if [[ -n $timer ]]; then
         human_time_to_var $(($EPOCHREALTIME - $timer)) "timer_show"
-        export EXECUTION_TIME="%F{cyan}‹${timer_show}›%f "
+        export PROMPT_EXECUTION_TIME="%F{cyan}‹${timer_show}›%f "
         unset timer
+        unset timer_show
     fi
 }
 
@@ -42,21 +45,21 @@ function parse_git_dirty() {
 }
 
 function check_git_arrows() {
-	# check if there is an upstream configured for this branch
-	command git rev-parse --abbrev-ref @'{u}' &>/dev/null || return
+    # check if there is an upstream configured for this branch
+    command git rev-parse --abbrev-ref @'{u}' &>/dev/null || return
 
-	local arrow_status
-	# check git left and right arrow_status
-	arrow_status="$(command git rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)"
-	# exit if the command failed
-	(( !$? )) || return
+    local arrow_status
+    # check git left and right arrow_status
+    arrow_status="$(command git rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)"
+    # exit if the command failed
+    (( !$? )) || return
 
-	# left and right are tab-separated, split on tab and store as array
-	arrow_status=(${(ps:\t:)arrow_status})
-	local arrows left=${arrow_status[1]} right=${arrow_status[2]}
+    # left and right are tab-separated, split on tab and store as array
+    arrow_status=(${(ps:\t:)arrow_status})
+    local arrows left=${arrow_status[1]} right=${arrow_status[2]}
 
-	(( ${right:-0} > 0 )) && arrows+="⇣"
-	(( ${left:-0} > 0 )) && arrows+="⇡"
+    (( ${right:-0} > 0 )) && arrows+="⇣"
+    (( ${left:-0} > 0 )) && arrows+="⇡"
 
     echo "${arrows}"
 }
@@ -126,7 +129,7 @@ function theme_setup() {
     add-zsh-hook preexec prompt_preexec
 
     local user_host="$(user_display_prompt_info)"
-    local exe_time='$EXECUTION_TIME'
+    local exe_time='$PROMPT_EXECUTION_TIME'
     local current_dir='%~ '
     local git_branch='$(git_prompt_info)'
     local virtualenv='$(virtualenv_prompt_info)'
