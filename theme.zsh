@@ -73,10 +73,18 @@ function check_git_stash() {
 }
 
 function git_prompt_info() {
-    local ref
-    ref=$(command git symbolic-ref HEAD 2> /dev/null) || \
-    ref=$(command git rev-parse --short HEAD 2> /dev/null) || return 0
-    echo "%F{yellow}‹${ref#refs/heads/}%B$(check_git_stash)%F{red}$(parse_git_dirty)%b%F{yellow}$(check_git_arrows)›%f "
+    local sha
+    sha=$(command git rev-parse --short HEAD 2> /dev/null)
+
+    if [[ -n $sha ]]; then
+        local ref
+
+        ref=$(command git symbolic-ref HEAD 2> /dev/null)
+        if [[ -z $ref  ]]; then
+            ref="detached"
+        fi
+        echo "%F{yellow}‹${ref#refs/heads/}(${sha})%B$(check_git_stash)%F{red}$(parse_git_dirty)%b%F{yellow}$(check_git_arrows)›%f "
+    fi
 }
 
 function virtualenv_prompt_info() {
@@ -93,8 +101,9 @@ function virtualenv_prompt_info() {
 }
 
 function jenv_prompt_info() {
-    if $(jenv local &> /dev/null); then
-        echo "%F{magenta}‹jenv:$(jenv local)›%f "
+    local output=$(jenv local &> /dev/null)
+    if [[ -n $output ]]; then
+        echo "%F{magenta}‹jenv:$output›%f "
     fi
 }
 
