@@ -145,7 +145,7 @@ function theme_setup() {
     local jenv='$(jenv_prompt_info)'
 
     local return_code="%(?..%F{red}%? ↵%f)"
-    local prompt_color="%(?.%F{green}❯%f.%F{red}❯%f)"
+    local prompt_color="%(?.%F{green}›%f.%F{red}❯%f)"
 
     local prompt_top="╭─${user_host}${exe_time}${current_dir}${git_branch}${virtualenv}${jenv}"
     local prompt_btm="╰─${prompt_color} "
